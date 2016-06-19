@@ -90,11 +90,11 @@ class Database:
             self.c.execute(main_query)
         else:
             self.c.execute(main_query+' WHERE item_id = ?',(company_id,))
-        companies = {}
+        companies = []
         for db_result in self.c.fetchall():
             company = dict(zip(columns,db_result))
             self.append_emails_and_phones(company)
-            companies[company['item_id']]=company
+            companies.append(company)
         return companies
 
     def get_company(self, item_id):
@@ -102,7 +102,7 @@ class Database:
         if len(companies) !=1:
             return []
         else:
-            return companies[item_id]
+            return companies[0]
 
     def append_emails_and_phones(self,item):
         emails = self.get_emails(item['item_id'])
@@ -120,11 +120,11 @@ class Database:
             self.c.execute(main_query)
         else:
             self.c.execute(main_query+' WHERE item_id = ?',(person_id,))
-        people = {}
+        people = []
         for db_result in self.c.fetchall():
             person = dict(zip(columns,db_result))
             self.append_emails_and_phones(person)
-            people[person['item_id']]=person
+            people.append(person)
         return people
 
     def get_person(self, item_id):
@@ -132,7 +132,7 @@ class Database:
         if len(people) !=1:
             return []
         else:
-            return people[item_id]
+            return people[0]
 
     def create(self):
         self.c.execute('''CREATE TABLE item_list(item_id integer  primary key)''')
