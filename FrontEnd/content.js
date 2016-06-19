@@ -4,33 +4,62 @@ app.controller('TabsCtrl', function($scope, $http) {
     $scope.ids = {'intro': 'intro', 'companies': 'companies', 'people': 'people'};
     $scope.tabs = [ {
         id: $scope.ids.intro,
-        title: 'Introduction',
-        url: 'introduction.tpl.html'
+        title: 'Introduction'
     },{
         id: $scope.ids.companies,
             title: 'Organisations',
             url: 'organisations.tpl.html'
         }, {
         id: $scope.ids.people,
-            title: 'People',
-            url: 'people.tpl.html'
+            title: 'People'
     }];
 
-    $scope.currentTab = 'introduction.tpl.html';
-
-    $scope.people=[];
-    $scope.organisations=[];
-
+    $scope.currentId = $scope.ids.intro;
     $scope.onClickTab = function (tab) {
-        $scope.currentTab = tab.url;
-        if(tab.id === $scope.ids.companies){$scope.loadCompanies()}
+        if($scope.currentId === $scope.ids.companies){
+            updateCompanies($scope.companies)
+        }
+        $scope.currentId = tab.id;
+        if(tab.id === $scope.ids.companies){loadCompanies()}
+        else if(tab.id === $scope.ids.people){loadPeople()}
     };
 
-    $scope.onClickCompanyPlus = function (company) {
-        debugger;
+    $scope.isActiveTab = function(tabId) {
+        return tabId == $scope.currentId;
     };
 
-    $scope.loadCompanies = function () {
+    $scope.onToggleCompany = function (company) {
+        company = getProcessedCompany(company);
+        company.edit = !company.edit;
+    };
+
+    $scope.onSubmitCompany = function (myForm,companies) {
+        if(myForm.$dirty) {
+            updateCompanies(companies)
+        }
+        myForm.$setPristine();
+    };
+
+    var updateCompanies= function( companies){
+        var data=[];
+        angular.forEach(companies, function(company){
+            if(company.edit){
+                data.push(company)
+            }
+        });
+        if(data.length){
+            putCompanies(data)
+        }
+    };
+
+    var putCompanies = function (data) {
+        $http.put($scope.url.base + $scope.url.companies,data)
+            .then(function (response) {
+                loadCompanies();
+            });
+    };
+
+    var loadCompanies = function () {
         $http.get($scope.url.base + $scope.url.companies)
             .then(function (response) {
                 $scope.companies = $scope.processCompanies(response.data.companies);
@@ -38,17 +67,22 @@ app.controller('TabsCtrl', function($scope, $http) {
     };
 
     $scope.processCompanies = function(rawCompanies){
-        debugger;
-
         var companies = [];
         angular.forEach(rawCompanies, function(company){
-            company.emailTxt = implode(company.emails);
-            company.phoneTxt = implode(company.phones);
-            company.addressTxt = getAddress(company);
-            companies.push(company);
+            companies.push(getProcessedCompany(company));
         });
-        console.log(companies);
+        companies.push({edit:true});
         return companies;
+    };
+
+    var getProcessedCompany = function(company){
+        company.emailTxt = implode(company.emails);
+        company.phoneTxt = implode(company.phones);
+        company.addressTxt = getAddress(company);
+        if(company.edit===undefined) {
+            company.edit = false;
+        }
+        return company;
     };
 
     var getAddress= function(company){
@@ -68,14 +102,11 @@ app.controller('TabsCtrl', function($scope, $http) {
         return list.join("\n");
     };
 
-    $scope.loadPeople = function(){
+    var loadPeople = function(){
         debugger;
         $http.get($scope.url.base+$scope.url.people)
             .then(function (response) {$scope.people = response.data.people;
             });
     };
 
-    $scope.isActiveTab = function(tabUrl) {
-        return tabUrl == $scope.currentTab;
-    }
 });

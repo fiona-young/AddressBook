@@ -38,12 +38,39 @@ class Database:
                 self.c.execute('UPDATE company SET address_id = ? WHERE item_id = ?',(address_id,item_id))
         self.commit()
 
+    def update_company(self,input):
+        if 'name' not in input:
+            return
+        item_id = input['item_id']
+        previous_company = self.get_company(item_id)
+        if input['name']!=previous_company['name']:
+            self.c.execute('UPDATE company set name = ? where item_id = ?',(input['name'],item_id))
+        self.update_email_or_phone(input,previous_company,item_id)
+        self.add_email_or_phone(input,item_id)
+        if previous_company['address_id'] is None:
+            created, address_id = self.add_address(input)
+            if created:
+                self.c.execute('UPDATE company SET address_id = ? WHERE item_id = ?',(address_id,item_id))
+        else:
+            self.update_address(previous_company['address_id'],previous_company,input)
+        self.commit()
+
+    def update_address(self,address_id, previous, input):
+        for possible_items in ['line1', 'line2','country','UK', 'postcode']:
+            if possible_items in input:
+                item = input[possible_items]
+                if item is None or item == previous[possible_items]:
+                    continue
+                self.c.execute('UPDATE address set %s=? where address_id=?'%possible_items,(item,address_id))
+
     def add_address(self, input):
         address_id = self.get_next_address_id()
         created = False
-        for possible_items in {'line1', 'line2','country','UK', 'postcode'}:
+        for possible_items in ['line1', 'line2','country','UK', 'postcode']:
             if possible_items in input:
                 item = input[possible_items]
+                if item is None:
+                    continue
                 if not created:
                     self.c.execute('INSERT into address(address_id,%s) VALUES(?,?)'%possible_items,(address_id,item))
                     created = True
@@ -52,10 +79,18 @@ class Database:
         return (created, address_id)
 
     def add_email_or_phone(self,input,item_id):
-        if 'email' in input:
-            self.c.execute('INSERT into email VALUES(?,?,?)',(self.get_next_email_id(),item_id,input['email']))
-        if 'phone' in input:
-            self.c.execute('INSERT into phone VALUES(?,?,?)',(self.get_next_phone_id(),item_id,input['phone']))
+        if 'email_add' in input:
+            self.c.execute('INSERT into email VALUES(?,?,?)',(self.get_next_email_id(),item_id,input['email_add']))
+        if 'phone_add' in input:
+            self.c.execute('INSERT into phone VALUES(?,?,?)',(self.get_next_phone_id(),item_id,input['phone_add']))
+
+    def update_email_or_phone(self,input,previous, item_id):
+        if 'emails' in input and previous['emails'] != input['emails']:
+            for key,value in input['emails'].items():
+                self.c.execute('UPDATE email SET email = ? WHERE item_id = ? AND email_id = ?' ,(value,item_id,key))
+        if 'phones' in input and previous['phones'] != input['phones']:
+            for key,value in input['phones'].items():
+                self.c.execute('UPDATE phone SET phone_number = ? WHERE item_id = ? AND phone_id = ?' ,(value,item_id,key))
 
     def add_person(self,input):
         if 'first_name' not in input:
