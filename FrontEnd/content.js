@@ -21,16 +21,35 @@ app.controller('TabsCtrl', function($scope, $http) {
         }
         $scope.currentId = tab.id;
         if(tab.id === $scope.ids.companies){loadCompanies()}
-        else if(tab.id === $scope.ids.people){loadPeople()}
+        else if(tab.id === $scope.ids.people){loadPeople();loadCompanies();}
     };
 
     $scope.isActiveTab = function(tabId) {
         return tabId == $scope.currentId;
     };
 
-    $scope.onToggleCompany = function (company) {
-        company = getProcessedCompany(company);
-        company.edit = !company.edit;
+    $scope.onToggle = function (item) {
+        item.edit = !item.edit;
+    };
+
+    $scope.getName = function (person){
+        var list = [];
+        angular.forEach(['first_name','second_name'], function(item){
+            if(person[item]){
+                list.push(person[item])
+            }
+        });
+        return list.join(" ");
+    };
+
+    $scope.getCompanyName = function(company_id) {
+        var  len = $scope.companies.length;
+        for (var i = 0; i < len; i++) {
+            if (String($scope.companies[i].item_id) === company_id) {
+                return $scope.companies[i].name;
+            }
+        }
+        return null;
     };
 
     $scope.onSubmitCompany = function (myForm,companies) {
@@ -41,15 +60,7 @@ app.controller('TabsCtrl', function($scope, $http) {
     };
 
     var updateCompanies= function( companies){
-        var data=[];
-        angular.forEach(companies, function(company){
-            if(company.edit){
-                data.push(company)
-            }
-        });
-        if(data.length){
-            putCompanies(data)
-        }
+        putCompanies(companies)
     };
 
     var putCompanies = function (data) {
@@ -62,30 +73,12 @@ app.controller('TabsCtrl', function($scope, $http) {
     var loadCompanies = function () {
         $http.get($scope.url.base + $scope.url.companies)
             .then(function (response) {
-                $scope.companies = $scope.processCompanies(response.data.companies);
+                $scope.companies =response.data.companies;
+                $scope.companies.push({edit:true});
             });
     };
 
-    $scope.processCompanies = function(rawCompanies){
-        var companies = [];
-        angular.forEach(rawCompanies, function(company){
-            companies.push(getProcessedCompany(company));
-        });
-        companies.push({edit:true});
-        return companies;
-    };
-
-    var getProcessedCompany = function(company){
-        company.emailTxt = implode(company.emails);
-        company.phoneTxt = implode(company.phones);
-        company.addressTxt = getAddress(company);
-        if(company.edit===undefined) {
-            company.edit = false;
-        }
-        return company;
-    };
-
-    var getAddress= function(company){
+    $scope.getAddress= function(company){
         var address = [];
         angular.forEach(['line1','line2','postcode','country'], function(item){
             if(company[item]!==undefined){
@@ -96,17 +89,20 @@ app.controller('TabsCtrl', function($scope, $http) {
 
     };
 
-    var implode = function(object){
+    $scope.implode = function(object){
         var list=[];
         angular.forEach(object,function(value,key){list.push(value)});
         return list.join("\n");
     };
+    
 
-    var loadPeople = function(){
-        debugger;
-        $http.get($scope.url.base+$scope.url.people)
-            .then(function (response) {$scope.people = response.data.people;
+    var loadPeople = function () {
+        $http.get($scope.url.base + $scope.url.people)
+            .then(function (response) {
+                $scope.people = response.data.people;
+                $scope.people.push({edit:true});
             });
     };
+    
 
 });

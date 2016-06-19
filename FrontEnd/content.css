@@ -16,10 +16,16 @@ li:hover {
     background-color: grey;
 }
 
+input {
+    width:180px;
+    font-size: 90%;
+}
+
 table, th , td {
     border: 1px solid grey;
     border-collapse: collapse;
     padding: 5px;
+    font-size: 100%;
 }
 
 table tr:nth-child(odd) {

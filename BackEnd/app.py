@@ -7,34 +7,6 @@ from database import Database
 root = "/address/api/v1.0/"
 app = Flask(__name__)
 
-people = [
-    {'id': 1,
-     'main': {
-         'first_name': "John",
-         'second_name': "Doe",
-         'email': "john.doe@company.com",
-         'phone': "0134543"
-     },
-     'address': {
-         'line1': "line1",
-         'line2': "line2",
-         'country': "UK",
-         'postcode': "EH73RT"
-     }}, {'id': 2,
-          'main': {
-              'first_name': "Jane",
-              'second_name': "Pratt",
-              'email': "jane.pratt@company.com",
-              'phone': "14567"
-          },
-          'address': {
-              'line1': "Front",
-              'line2': "Back",
-              'country': "UK",
-              'postcode': "Edinburgh"
-          }},
-]
-
 @app.route(root+'people/', methods=['GET'])
 @crossdomain(origin='*')
 def get_people():

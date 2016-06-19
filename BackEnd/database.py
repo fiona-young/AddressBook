@@ -149,7 +149,7 @@ class Database:
 
 
     def get_people(self, person_id = None):
-        columns = ['item_id','first_name','second_name','address_id','line1','line2','country','postcode']
+        columns = ['item_id','first_name','second_name','company_id','address_id','line1','line2','country','postcode']
         main_query = 'SELECT item_id,first_name,second_name,company_id,people.address_id,line1,line2,country,postcode from people LEFT JOIN address ON(people.address_id=address.address_id)'
         if person_id is None:
             self.c.execute(main_query)
@@ -158,6 +158,8 @@ class Database:
         people = []
         for db_result in self.c.fetchall():
             person = dict(zip(columns,db_result))
+            if person['company_id'] is not None:
+                person['company_id']=str(person['company_id'])
             self.append_emails_and_phones(person)
             people.append(person)
         return people
