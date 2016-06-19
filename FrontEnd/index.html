@@ -23,40 +23,67 @@
 <body id ="body">
 <div ng-app="TabsApp">
     <div id="title-bar"><h1>Address Book</h1></div>
-    <div ng-controller="TabsCtrl" class="flexbox" >
+    <div ng-controller="TabsCtrl as ctrl" class="flexbox" >
          <div id ="tabs" layout="column" class="sidenav1">
-             <div id = "inner-tabs"><b>SideNav</b></div>
+             <div class = "inner"><b>SideNav</b></div>
 
         <ul>
             <li ng-repeat="tab in tabs"
-                ng-class="{active:isActiveTab(tab.url)}"
+                ng-class="{active:isActiveTab(tab.id)}"
                 ng-click="onClickTab(tab)">{{tab.title}}</li>
         </ul>
              </div>
                 <div id="mainView">
-            <div ng-include="currentTab"></div>
+            <div class = "inner" ng-include="currentId"></div>
         </div>
     </div>
 
-    <script type="text/ng-template" id="organisation.tpl.html">
-		<div id="organisation">
-			<h1>Organisation</h1>
-			<p>Praesent id metus massa, ut blandit odio. Proin quis tortor orci. Etiam at risus et justo dignissim congue. Donec congue lacinia dui, a porttitor lectus condimentum laoreet. Nunc.</p>
+    <script type="text/ng-template" id="intro">
+        <div id="introduction">
+            <h1>Introduction</h1>
+            <p>Welcome to your Address-Book. Please select from the tabs to the left to view edit and amend organisations and people.</p>
+        </div>
+    </script>
+
+    <script type="text/ng-template" id="companies">
+		<div id="organisations">
+			<h1>Organisations</h1>
+			<p>These are the organisations you have in your address book.</p>
+            <form name="myForm" ng-submit="confirm()">
+            <table class = "inner">
+                <tr><th>Name</th><th>Email</th><th>Phone</th><th>Address</th> <td ng-click="onSubmitCompany(myForm,companies)"><a href="">submit</a></td></tr>
+                <tr ng-repeat="company in companies">
+                    <td ng-show="!company.edit">{{company.name}}</td>
+                    <td ng-show="!company.edit" class = "breaks">{{company.emailTxt}}</td>
+                    <td ng-show="!company.edit" class = "breaks">{{company.phoneTxt}}</td>
+                    <td ng-show="!company.edit" class = "breaks">{{company.addressTxt}}</td>
+                    <td ng-show="!company.edit" ng-click="onToggleCompany(company)"><a href="">edit</a></td>
+                    <td ng-show="company.edit"><input ng-model=company.name></td>
+                        <td ng-show="company.edit">
+                            <div ng-repeat="(email_id,email_val) in company.emails"> <div class="label new"></div><input ng-model=company.emails[email_id]></div>
+                            <div class="label new">new:</div><input ng-model=company.email_add>
+                        </td>
+                    <td ng-show="company.edit">
+                        <div ng-repeat="(phone_id,phone_val) in company.phones"><div class="label new"></div><input ng-model=company.phones[phone_id]></div>
+                        <div class="label new">new:</div><input ng-model=company.phone_add>
+                    </td>
+                    <td ng-show="company.edit">
+                        <div class="label">line1:</div><input ng-model=company.line1><br>
+                        <div class="label">line2:</div><input ng-model=company.line2><br>
+                        <div class="label">postcode:</div><input ng-model=company.postcode><br>
+                        <div class="label">country:</div><input ng-model=company.country><br>
+                    </td>
+                    <td ng-show="company.edit" ng-click="onToggleCompany(company)"><a href="">finished</a></td>
+                </tr>
+            </table>
+        </form>
+            <p> is Form dirty? {{myForm.$dirty}}<p>
 		</div>
 	</script>
 
-	<script type="text/ng-template" id="two.tpl.html">
-		<div id="viewTwo">
-			<h1>View Two</h1>
-			<p>Curabitur vulputate, ligula lacinia scelerisque tempor, lacus lacus ornare ante, ac egestas est urna sit amet arcu. Class aptent taciti sociosqu.</p>
-		</div>
-	</script>
-
-	<script type="text/ng-template" id="three.tpl.html">
-		<div id="viewThree">
-			<h1>View Three</h1>
-			<p>In pellentesque faucibus vestibulum. Nulla at nulla justo, eget luctus tortor. Nulla facilisi. Duis aliquet egestas purus in blandit. Curabitur vulputate, ligula lacinia scelerisque tempor, lacus lacus ornare ante, ac egestas est urna sit amet arcu. Class aptent taciti sociosqu.</p>
-		</div>
+	<script type="text/ng-template" id="people">
+			<h1>People</h1>
+			<p>These are the people in your organisation.</p>
 	</script>
 </div>
 </body>
