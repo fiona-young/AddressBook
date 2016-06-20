@@ -1,5 +1,5 @@
-var app = angular.module('TabsApp', []);
-app.controller('TabsCtrl', function($scope, $http) {
+var app = angular.module('MyApp', []);
+app.controller('MyCtrl', function($scope, $http) {
     $scope.url={base:'http://127.0.0.1:5000/address/api/v1.0/',people:'people/',companies:'companies/'};
     $scope.ids = {'intro': 'intro', 'companies': 'companies', 'people': 'people'};
     $scope.tabs = [ {
@@ -14,6 +14,7 @@ app.controller('TabsCtrl', function($scope, $http) {
             title: 'People'
     }];
 
+    $scope.editItems={};
     $scope.currentId = $scope.ids.intro;
     $scope.onClickTab = function (tab) {
         if($scope.currentId === $scope.ids.companies){
@@ -28,8 +29,18 @@ app.controller('TabsCtrl', function($scope, $http) {
         return tabId == $scope.currentId;
     };
 
+    $scope.shouldEdit = function(item){
+        if(item.item_id === undefined ){
+            return true
+        }
+        if ($scope.editItems[item.item_id]===undefined){
+            $scope.editItems[item.item_id]=false;
+        }
+        return $scope.editItems[item.item_id];
+    };
+
     $scope.onToggle = function (item) {
-        item.edit = !item.edit;
+        $scope.editItems[item.item_id] = !$scope.editItems[item.item_id];
     };
 
     $scope.getName = function (person){
@@ -59,6 +70,20 @@ app.controller('TabsCtrl', function($scope, $http) {
         myForm.$setPristine();
     };
 
+    $scope.onDeleteCompany = function (company) {
+        var r = confirm("Really Delete "+company.name+"?");
+        if (r == true) {
+            deleteCompany(company.item_id);
+        }
+    };
+
+    var deleteCompany = function (item_id) {
+        $http.delete($scope.url.base + $scope.url.companies+item_id)
+            .then(function (response) {
+                loadCompanies();
+            });
+    };
+
     var updateCompanies= function( companies){
         putCompanies(companies)
     };
@@ -74,7 +99,7 @@ app.controller('TabsCtrl', function($scope, $http) {
         $http.get($scope.url.base + $scope.url.companies)
             .then(function (response) {
                 $scope.companies =response.data.companies;
-                $scope.companies.push({edit:true});
+                $scope.companies.push({});
             });
     };
 
@@ -100,9 +125,42 @@ app.controller('TabsCtrl', function($scope, $http) {
         $http.get($scope.url.base + $scope.url.people)
             .then(function (response) {
                 $scope.people = response.data.people;
-                $scope.people.push({edit:true});
+                $scope.people.push({});
             });
     };
-    
+
+    $scope.onDeletePerson = function (person) {
+        var r = confirm("Really Delete "+person.first_name+(person.second_name?" "+person.second_name:"")+"?");
+        if (r == true) {
+            deletePerson(person.item_id);
+        }
+    };
+
+
+    $scope.onSubmitPeople = function (myForm,people) {
+        if(myForm.$dirty) {
+            updatePeople(people)
+        }
+        myForm.$setPristine();
+    };
+
+    var updatePeople= function( people){
+        putPeople(people)
+    };
+
+    var putPeople = function (data) {
+        $http.put($scope.url.base + $scope.url.people,data)
+            .then(function (response) {
+                loadPeople();
+            });
+    };
+
+    var deletePerson = function (item_id) {
+        $http.delete($scope.url.base + $scope.url.people+item_id)
+            .then(function (response) {
+                loadPeople();
+            });
+    };
+
 
 });

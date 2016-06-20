@@ -99,16 +99,56 @@ class Database:
         self.c.execute('INSERT into item_list VALUES(?)',(item_id,))
         self.c.execute('INSERT into people(item_id,first_name) VALUES(?,?)',(item_id,input['first_name']))
         if 'second_name' in input:
-            self.c.execute('UPDATE people set second_name = ? WHERE item_id =?',(item_id,input['second_name']))
-        if 'company' in input:
-            company_id = self.get_company_id_from_name(input['company'])
-            if company_id is not None:
-                self.c.execute('UPDATE people set company_id = ? WHERE item_id =?',(company_id,item_id))
+            self.c.execute('UPDATE people set second_name = ? WHERE item_id =?',(input['second_name'],item_id))
+        if 'company_id' in input:
+            self.c.execute('UPDATE people set company_id = ? WHERE item_id =?',(input['company_id'],item_id))
         self.add_email_or_phone(input,item_id)
         created, address_id = self.add_address(input)
         if created:
             self.c.execute('UPDATE people SET address_id = ? WHERE item_id = ?',(address_id,item_id))
         self.commit()
+
+    def delete_person(self, item_id):
+        person = self.get_person(item_id)
+        if person['address_id'] is not None:
+            self.c.execute('DELETE from address WHERE address_id = ?',(person['address_id'],))
+        self.c.execute('DELETE from email WHERE item_id = ?',(item_id,))
+        self.c.execute('DELETE from phone WHERE item_id = ?',(item_id,))
+        self.c.execute('DELETE from people WHERE item_id = ?',(item_id,))
+        self.commit()
+
+    def delete_company(self, item_id):
+        company = self.get_company(item_id)
+        if company['address_id'] is not None:
+            self.c.execute('DELETE from address WHERE address_id = ?',(company['address_id'],))
+        self.c.execute('DELETE from email WHERE item_id = ?',(item_id,))
+        self.c.execute('DELETE from phone WHERE item_id = ?',(item_id,))
+        self.c.execute('UPDATE people SET company_id = NULL WHERE company_id = ?',(item_id,))
+        self.c.execute('DELETE from company WHERE item_id = ?',(item_id,))
+        self.commit()
+            
+    def update_person(self,input):
+        if 'first_name' not in input:
+            return
+        item_id = input['item_id']
+        previous_person = self.get_person(item_id)
+        if input['first_name']!=previous_person['first_name']:
+            self.c.execute('UPDATE people set first_name = ? where item_id = ?',(input['first_name'],item_id))
+        if 'second_name' in input and input['second_name']!=previous_person['second_name']:
+            self.c.execute('UPDATE people set second_name = ? where item_id = ?',(input['second_name'],item_id))
+        if 'company_id' in input and input['company_id']!=previous_person['company_id']:
+            self.c.execute('UPDATE people set company_id = ? WHERE item_id =?',(input['company_id'],item_id))
+
+        self.update_email_or_phone(input,previous_person,item_id)
+        self.add_email_or_phone(input,item_id)
+        if previous_person['address_id'] is None:
+            created, address_id = self.add_address(input)
+            if created:
+                self.c.execute('UPDATE people SET address_id = ? WHERE item_id = ?',(address_id,item_id))
+        else:
+            self.update_address(previous_person['address_id'],previous_person,input)
+        self.commit()
+
 
     def get_emails(self,item_id):
         self.c.execute('SELECT email_id,email from email where item_id = ?',(item_id,))
@@ -119,8 +159,8 @@ class Database:
         return dict(self.c.fetchall())
 
     def get_companies(self, company_id = None):
-        columns = ['item_id','name','address_id','line1','line2','country','postcode']
-        main_query = 'SELECT item_id,name,company.address_id,line1,line2,country,postcode from company LEFT JOIN address ON(company.address_id=address.address_id)'
+        columns = ['item_id','name','address_id','line1','line2','country','postcode','people']
+        main_query = 'SELECT company.item_id,name,company.address_id,line1,line2,country,postcode,group_concat(first_name||" "||IFNULL(second_name,""),"\n") AS people from company LEFT JOIN address ON(company.address_id=address.address_id) LEFT JOIN people ON(company.item_id=people.company_id) GROUP BY company.item_id'
         if company_id is None:
             self.c.execute(main_query)
         else:
