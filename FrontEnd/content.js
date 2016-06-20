@@ -19,6 +19,8 @@ app.controller('MyCtrl', function($scope, $http) {
     $scope.onClickTab = function (tab) {
         if($scope.currentId === $scope.ids.companies){
             updateCompanies($scope.companies)
+        }else if($scope.currentId === $scope.ids.people) {
+            updatePeople($scope.people)
         }
         $scope.currentId = tab.id;
         if(tab.id === $scope.ids.companies){loadCompanies()}

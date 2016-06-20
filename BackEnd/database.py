@@ -5,6 +5,10 @@ class Database:
     def __init__(self, location='example.db'):
         self.conn = sqlite3.connect(location)
         self.c = self.conn.cursor()
+        try:
+            self.create()
+        except sqlite3.OperationalError:
+            pass
 
     def get_auto_increment(self, table_id='item_id', table_name='item_list'):
         t = (table_id, table_name)
