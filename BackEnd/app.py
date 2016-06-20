@@ -65,12 +65,12 @@ def preflight_people():
 @app.route(root+'companies/', methods=['GET'])
 @crossdomain(origin='*')
 def get_companies():
-    #try:
-    db = Database()
-    companies = db.get_companies()
-    return jsonify({'companies': companies})
-    #except:
-     #   abort(500)
+    try:
+        db = Database()
+        companies = db.get_companies()
+        return jsonify({'companies': companies})
+    except:
+        abort(500)
 
 @app.route(root+'companies/', methods=['PUT'])
 @crossdomain(origin='*',headers="Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
